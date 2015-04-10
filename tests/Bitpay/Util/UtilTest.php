@@ -258,4 +258,63 @@ class UtilTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+    public function testFailedRequirementsPHP()
+    {
+        $failed = Util::failedRequirements();
+
+        // PHP Version
+        if (!defined('PHP_VERSION_ID')) {
+            $version = explode('.', PHP_VERSION);
+            define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
+        }
+        if (PHP_VERSION_ID >= 50400) {
+            $this->assertFalse(array_key_exists('PHP', $failed));
+        } else {
+            $this->assertTrue(array_key_exists('PHP', $failed));
+        }
+
+        // Mcrypt Extension
+        if (extension_loaded('mcrypt')) {
+            $this->assertFalse(array_key_exists('Mcrypt', $failed));
+        } else {
+            $this->assertTrue(array_key_exists('Mcrypt', $failed));
+        }
+
+        // OpenSSL Extension
+        if (extension_loaded('openssl')) {
+            $this->assertFalse(array_key_exists('OpenSSL', $failed));
+        } else {
+            $this->assertTrue(array_key_exists('OpenSSL', $failed));
+        }
+
+        // JSON Extension
+        if (extension_loaded('json')) {
+            $this->assertFalse(array_key_exists('JSON', $failed));
+        } else {
+            $this->assertTrue(array_key_exists('JSON', $failed));
+        }
+
+        // cURL Extension
+        if (extension_loaded('curl')) {
+            $this->assertFalse(array_key_exists('cURL', $failed));
+            $curl_version = curl_version();
+            $ssl_supported = ($curl_version['features'] & CURL_VERSION_SSL);
+            if ($ssl_supported) {
+                $this->assertFalse(array_key_exists('cURL.SSL', $failed));
+            } else {
+                $this->assertTrue(array_key_exists('cURL.SSL', $failed));
+            }
+        } else {
+            $this->assertTrue(array_key_exists('cURL', $failed));
+            $this->assertFalse(array_key_exists('cURL.SSL', $failed));
+        }
+
+        // Math
+        if (extension_loaded('bcmath') || extension_loaded('gmp')) {
+            $this->assertFalse(array_key_exists('Math', $failed));
+        } else {
+            $this->assertTrue(array_key_exists('Math', $failed));
+        }
+    }
+
 }

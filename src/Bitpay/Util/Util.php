@@ -406,4 +406,56 @@ class Util
 
         return strrev($byte);
     }
+
+    /**
+     * Checks dependencies for the library
+     *
+     * @return array key/description array of each failed requirement, empty array if all requirements are met
+     */
+    public static function failedRequirements()
+    {
+        $failed = array();
+        
+        // PHP Version
+        if (!defined('PHP_VERSION_ID')) {
+            $version = explode('.', PHP_VERSION);
+            define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
+        }
+        if (PHP_VERSION_ID < 50400) {
+            $failed['PHP'] = 'Your PHP version, ' . PHP_VERSION . ', is too low. PHP version >= 5.4 is required.';
+        }
+
+        // Mcrypt Extension
+        if (!extension_loaded('mcrypt')) {
+            $failed['Mcrypt'] = 'The Mcrypt PHP extension could not be found.';
+        }
+
+        // OpenSSL Extension
+        if (!extension_loaded('openssl')) {
+            $failed['OpenSSL'] = 'The OpenSSL PHP extension could not be found.';
+        }
+
+        // JSON Extension
+        if (!extension_loaded('json')) {
+            $failed['JSON'] = 'The JSON PHP extension could not be found.';
+        }
+
+        // cURL Extension
+        if (!extension_loaded('curl')) {
+            $failed['cURL'] = 'The cURL PHP extension could not be found.';
+        } else {
+            $curl_version = curl_version();
+            $ssl_supported = ($curl_version['features'] & CURL_VERSION_SSL);
+            if (!$ssl_supported) {
+                $failed['cURL.SSL'] = 'The cURL PHP extension does not have SSL support.';
+            }
+        }
+
+        // Math
+        if (!extension_loaded('bcmath') && !extension_loaded('gmp')) {
+            $failed['Math'] = 'Either the BC Math or GMP PHP extension is required.  Neither could be found.';
+        }
+
+        return $failed;
+    }
 }
